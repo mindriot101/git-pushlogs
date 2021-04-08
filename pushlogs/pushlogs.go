@@ -9,10 +9,11 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/mindriot101/git-pushlogs/errors"
 	"github.com/mindriot101/git-pushlogs/push"
+	"github.com/mindriot101/git-pushlogs/repo"
 )
 
 type pushlogs struct {
-	repo *git.Repository
+	repo repo.Repo
 }
 
 func (p *pushlogs) Pushes() ([]push.Push, error) {
@@ -29,7 +30,7 @@ func (p *pushlogs) Pushes() ([]push.Push, error) {
 	s := bufio.NewScanner(f)
 	for s.Scan() {
 		line := s.Text()
-		push, err := push.NewPush(line, p.repo)
+		push, err := push.New(line, p.repo)
 		if err != nil {
 			return nil, errors.Errorf(fmt.Sprintf("error reading line %s", line), err)
 		}

@@ -6,18 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/mindriot101/git-pushlogs/errors"
+	"github.com/mindriot101/git-pushlogs/repo"
 )
 
-type Repo interface {
-	CommitObject(plumbing.Hash) (*object.Commit, error)
-}
-
 type Push struct {
-	repo Repo
+	repo repo.Repo
 	t    time.Time
 	hash string
 }
@@ -53,7 +48,7 @@ func (p *Push) commitMessage(hash string) (string, error) {
 	return c.Message, nil
 }
 
-func NewPush(line string, repo *git.Repository) (Push, error) {
+func New(line string, repo repo.Repo) (Push, error) {
 	parts := strings.Split(line, " ")
 	if len(parts) != 2 {
 		return Push{}, errors.Errorf(fmt.Sprintf("error parsing line %s, incorrect number of parts", line), nil)

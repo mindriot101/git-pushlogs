@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
@@ -16,6 +17,10 @@ func (f *FakeRepo) CommitObject(h plumbing.Hash) (*object.Commit, error) {
 	return &object.Commit{
 		Message: "message",
 	}, nil
+}
+
+func (f *FakeRepo) Worktree() (*git.Worktree, error) {
+	return nil, nil
 }
 
 func TestPrint(t *testing.T) {
