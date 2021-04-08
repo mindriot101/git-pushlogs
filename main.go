@@ -6,74 +6,18 @@ import (
 	"log"
 	"os"
 	"path"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/mindriot101/git-pushlogs/errors"
+	"github.com/mindriot101/git-pushlogs/push"
 )
-
-func timeFromUnix(s string) (*time.Time, error) {
-	i, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		return nil, errors.Errorf(fmt.Sprintf("error parsing %s to an integer", s), err)
-	}
-	tm := time.Unix(i, 0)
-	return &tm, nil
-}
-
-type Push struct {
-	repo *git.Repository
-	t    time.Time
-	hash string
-}
-
-func (p *Push) Print() (string, error) {
-	msg, err := p.commitMessage(p.hash)
-	if err != nil {
-		return "", errors.Errorf(fmt.Sprintf("error fetching message for commit %s", p.hash), err)
-	}
-	h := commitHeader(msg)
-	return fmt.Sprintf("%v: %s %s\n", p.t, p.hash[:16], h), nil
-}
-
-func commitHeader(msg string) string {
-	lines := strings.Split(msg, "\n")
-	return lines[0]
-}
-
-func (p *Push) commitMessage(hash string) (string, error) {
-	h := plumbing.NewHash(hash)
-	c, err := p.repo.CommitObject(h)
-	if err != nil {
-		return "", errors.Errorf(fmt.Sprintf("invalid hash for project %s", hash), err)
-	}
-	return c.Message, nil
-}
-
-func NewPush(line string, repo *git.Repository) (Push, error) {
-	parts := strings.Split(line, " ")
-	if len(parts) != 2 {
-		return Push{}, errors.Errorf(fmt.Sprintf("error parsing line %s, incorrect number of parts", line), nil)
-	}
-	dt, err := timeFromUnix(parts[0])
-	if err != nil {
-		return Push{}, errors.Errorf(fmt.Sprintf("cannot understand time %s", parts[0]), err)
-	}
-	return Push{
-		repo: repo,
-		t:    *dt,
-		hash: parts[1],
-	}, nil
-}
 
 type pushlogs struct {
 	repo *git.Repository
 }
 
-func (p *pushlogs) Pushes() ([]Push, error) {
+func (p *pushlogs) Pushes() ([]push.Push, error) {
 	fn, err := p.logFilename()
 	if err != nil {
 		return nil, errors.Errorf("error fetching log filename", err)
@@ -83,11 +27,11 @@ func (p *pushlogs) Pushes() ([]Push, error) {
 		return nil, errors.Errorf("cannot find push log file", err)
 	}
 	defer f.Close()
-	pushes := []Push{}
+	pushes := []push.Push{}
 	s := bufio.NewScanner(f)
 	for s.Scan() {
 		line := s.Text()
-		push, err := NewPush(line, p.repo)
+		push, err := push.NewPush(line, p.repo)
 		if err != nil {
 			return nil, errors.Errorf(fmt.Sprintf("error reading line %s", line), err)
 		}
